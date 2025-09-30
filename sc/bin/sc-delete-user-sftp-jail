@@ -6,6 +6,8 @@
 
 # Argument definition
 user=$1
+user_str=$(grep "^$user:" /etc/passwd )
+mount_dir="$(echo $user_str |cut -f 6 -d :)"
 
 # Includes
 source "/usr/local/sc/config"
@@ -17,40 +19,30 @@ source "$sc/func/main.sh"
 
 check_args '1' "$#" 'USER'
 is_user_exist "$user"
-#is_user_sftp "$user"
+
 
 #----------------------------------------------------------#
 #                       Action                             #
 #----------------------------------------------------------#
 
-
-# Defining user homedir
-home="$(echo $user_str |cut -f 6 -d :)"
-
-# Adding chroot directory
-if [ ! -d "/jail/$user/$user" ]; then
-	mkdir -p /jail/$user/$user
-
-	# Prepare the chroot directory
-	chown root:root /jail /jail/$user
-	chmod 755 /jail /jail/$user
-
-	# Prepare the user's actual home directory
-	chown $user: /jail/$user/$user
-	chmod 750 /jail/$user/$user
-
-	# Make it usable outside the chroot too
-	ln -s /jail/$user/$user /$user
-
-	# And now it can be assigned to the user.
-	#usermod -d /$user $user
+#unmount mount point
+mount_str=$(mount | grep "/jail/$user/$user")
+if [ -n "$mount_str" ]; then
+  umount /jail/$user/$user
 fi
 
-# Adding user to sftp group
+# Remove chroot directory
+if [  -d "/jail/$user" ]; then
+  rm -rf /jail/$user
+fi
+
+if [ -L "/$user" ]; then
+  rm -f /$user
+fi
+
+# Remove user sftp group
 is_sftp=$(groups $user | grep sftp-only)
-if [ -z "$is_sftp" ]; then
-  usermod -a -G sftp-only $user
+if [ -n "$is_sftp" ]; then
+  gpasswd --delete $user sftp-only
 fi
 
-# Mouting home directory
-"$BIN"sc-add-user-sftp-mount $user

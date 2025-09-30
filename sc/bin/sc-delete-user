@@ -1,0 +1,67 @@
+#!/bin/bash
+
+#----------------------------------------------------------#
+#                    Variable&Function                     #
+#----------------------------------------------------------#
+
+# Argument definition
+user=$1
+
+# Includes
+source "/usr/local/sc/config"
+source "$sc/func/main.sh"
+
+#----------------------------------------------------------#
+#                    Verifications                         #
+#----------------------------------------------------------#
+
+check_args '1' "$#" 'USER'
+is_user_exist "$user"
+
+#----------------------------------------------------------#
+#                       Action                             #
+#----------------------------------------------------------#
+
+
+while true; do
+
+read -p "Do you want to delete user $user? (yes/no) " yn
+
+case $yn in
+	yes ) break;;
+	no ) echo exiting...;
+		exit;;
+	* ) echo invalid response;;
+esac
+done
+
+while true; do
+read -p "Warning! This will delete all user data ( user domains/databases/configurations and user itself ). Are you sure? (yes/no)" yn
+case $yn in
+	yes ) break;;
+	no ) echo exiting...;
+		exit;;
+	* ) echo invalid response;;
+esac
+done
+
+echo "Deleting user $user"
+
+for domain in $(list_objects 'web' 'DOMAIN'); do
+  sc-delete-user-domain "$user" "$domain"
+done
+
+for db in $(list_objects 'db' 'DB'); do
+  sc-delete-mysql-database "$user" "$db"
+done
+
+userdel "$user"
+
+if [ -d "$HOMEDIR/$user" ]; then
+  rm -r "$HOMEDIR/$user"
+fi
+if [ -d "$USER_DATA" ]; then
+  rm -r "$USER_DATA"
+fi
+
+echo "User $user deleted"
