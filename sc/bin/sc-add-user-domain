@@ -14,7 +14,7 @@ source "/usr/local/sc/config"
 source "$sc/func/main.sh"
 
 if [ -z "$php_version" ];then
-	php_version="8.2"
+	php_version="8.4"
 fi
 
 

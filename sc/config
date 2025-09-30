@@ -2,4 +2,4 @@
 sc='/usr/local/sc'
 BIN="$sc/bin/"
 templates_path='/usr/local/sc/templates/'
-php_versions="7.4|8.1|8.2"
+php_versions="7.4|8.1|8.2|8.4"
